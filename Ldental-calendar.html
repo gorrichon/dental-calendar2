@@ -613,29 +613,34 @@ async function confirmReservation() {
   closeModal();
   showToast('予約を送信中...');
   try {
-    if (window.liff && liff.isInClient()) {
-      // chat_message.writeスコープで日時をLINEに送信
-      await liff.sendMessages([{
-        type: 'text',
-        text: '予約日時:' + selectedSlot.label
-      }]);
-      showToast('✅ 予約が完了しました！');
-      setTimeout(() => liff.closeWindow(), 1500);
-    } else {
-      // PC/ブラウザ環境：直接POSTで送信
-      await fetch(N8N_WEBHOOK_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId: USER_ID,
-          treatment_type: TREATMENT_TYPE,
-          datetime: selectedSlot.label,
-          dateStr: selectedSlot.dateStr,
-          time: selectedSlot.time,
-        })
-      });
-      showToast('✅ 予約が完了しました！');
+    // userIdをLIFFまたはURLパラメータから取得
+    let userId = USER_ID;
+    if (window.liff) {
+      try {
+        const profile = await liff.getProfile();
+        if (profile.userId) userId = profile.userId;
+      } catch(e) {
+        console.warn('LIFF profile error:', e);
+      }
     }
+
+    // 常にn8nに直接POST送信
+    await fetch(N8N_WEBHOOK_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        userId: userId,
+        treatment_type: TREATMENT_TYPE,
+        datetime: selectedSlot.label,
+        dateStr: selectedSlot.dateStr,
+        time: selectedSlot.time,
+      })
+    });
+
+    showToast('✅ 予約が完了しました！');
+    setTimeout(() => {
+      if (window.liff && liff.isInClient()) liff.closeWindow();
+    }, 2000);
   } catch(e) {
     showToast('❌ エラー: ' + e.message);
   }
