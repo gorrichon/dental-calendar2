@@ -614,15 +614,13 @@ async function confirmReservation() {
   showToast('予約を送信中...');
   try {
     if (window.liff && liff.isInClient()) {
-      // LIFF環境：LINEメッセージとして日時を送信
+      // chat_message.writeスコープで日時をLINEに送信
       await liff.sendMessages([{
         type: 'text',
-        text: selectedSlot.label
+        text: '予約日時:' + selectedSlot.label
       }]);
       showToast('✅ 予約が完了しました！');
-      setTimeout(() => {
-        liff.closeWindow();
-      }, 1500);
+      setTimeout(() => liff.closeWindow(), 1500);
     } else {
       // PC/ブラウザ環境：直接POSTで送信
       await fetch(N8N_WEBHOOK_URL, {
