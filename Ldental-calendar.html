@@ -373,7 +373,7 @@
 
 <script>
 // ===== CONFIG =====
-const N8N_WEBHOOK_URL = 'https://n8n.exiine.com/webhook/liff-reservation'; // ← ここに貼る
+const N8N_WEBHOOK_URL = 'https://n8n.exiine.com/webhook/liff-reservation';
 const TREATMENT_TYPE = new URLSearchParams(location.search).get('treatment') || '検診';
 const USER_ID = new URLSearchParams(location.search).get('userId') || '';
 
@@ -611,7 +611,6 @@ function closeModal() {
 
 async function confirmReservation() {
   closeModal();
-  showToast('送信先: ' + N8N_WEBHOOK_URL);
   showToast('予約を送信中...');
   try {
     // LIFFからuserIdを取得
@@ -621,23 +620,28 @@ async function confirmReservation() {
       userId = profile.userId;
     }
 
+    const payload = {
+      userId: userId,
+      treatment_type: TREATMENT_TYPE,
+      datetime: selectedSlot.label,
+      dateStr: selectedSlot.dateStr,
+      time: selectedSlot.time,
+    };
+
+    // no-corsモードで送信（LIFF環境対応）
     await fetch(N8N_WEBHOOK_URL, {
       method: 'POST',
+      mode: 'no-cors',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        userId: userId,
-        treatment_type: TREATMENT_TYPE,
-        datetime: selectedSlot.label,
-        dateStr: selectedSlot.dateStr,
-        time: selectedSlot.time,
-      })
+      body: JSON.stringify(payload)
     });
+
     showToast('✅ 予約が完了しました！');
     setTimeout(() => {
       if (window.liff) liff.closeWindow();
     }, 2000);
   } catch(e) {
-    showToast('❌ エラーが発生しました。もう一度お試しください。');
+    showToast('❌ エラー: ' + e.message);
   }
 }
 
