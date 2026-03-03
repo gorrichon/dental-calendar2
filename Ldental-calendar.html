@@ -611,6 +611,7 @@ function closeModal() {
 
 async function confirmReservation() {
   closeModal();
+  showToast('送信先: ' + N8N_WEBHOOK_URL);
   showToast('予約を送信中...');
   try {
     // LIFFからuserIdを取得
