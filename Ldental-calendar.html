@@ -613,7 +613,6 @@ async function confirmReservation() {
   closeModal();
   showToast('予約を送信中...');
   try {
-    // userIdをLIFFまたはURLパラメータから取得
     let userId = USER_ID;
     if (window.liff) {
       try {
@@ -623,8 +622,6 @@ async function confirmReservation() {
         console.warn('LIFF profile error:', e);
       }
     }
-
-    // 常にn8nに直接POST送信
     await fetch(N8N_WEBHOOK_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -636,7 +633,6 @@ async function confirmReservation() {
         time: selectedSlot.time,
       })
     });
-
     showToast('✅ 予約が完了しました！');
     setTimeout(() => {
       if (window.liff && liff.isInClient()) liff.closeWindow();
@@ -645,7 +641,6 @@ async function confirmReservation() {
     showToast('❌ エラー: ' + e.message);
   }
 }
-
 // ===== TOAST =====
 let toastTimer;
 function showToast(msg) {
