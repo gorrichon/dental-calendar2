@@ -1,1 +1,914 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>予約ページ</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --green: #4e9f2d;
+    --green-dark: #3f8425;
+    --green-light: #eef8e8;
+    --line-green: #06C755;
+    --red: #f36f6f;
+    --text: #505050;
+    --text-soft: #777;
+    --white: #ffffff;
 
+    --grid-gray: #dcdcdc;
+    --cell-bg: #f3f3f3;
+    --time-bg: #dddddd;
+    --sun-bg: #f7dede;
+    --sat-bg: #d9eef8;
+    --closed-bg: #d6d6d6;
+    --inactive: #c8c8c8;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Noto Sans JP', sans-serif;
+    background: #f1f1f1;
+    color: var(--text);
+    min-height: 100vh;
+    padding-bottom: 24px;
+  }
+
+  .page {
+    max-width: 760px;
+    margin: 0 auto;
+  }
+
+  /* Header */
+  .header {
+    background: var(--white);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 14px;
+    border-bottom: 1px solid #ececec;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .header h1 {
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+  }
+
+  .history-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    background: none;
+    border: none;
+    color: var(--line-green);
+    font-size: 10px;
+    font-family: inherit;
+    cursor: pointer;
+    font-weight: 500;
+  }
+
+  .history-btn svg {
+    width: 22px;
+    height: 22px;
+  }
+
+  /* top info */
+  .top-card {
+    background: #fff;
+    margin: 12px 10px 10px;
+    border-radius: 12px;
+    padding: 14px;
+    border: 1px solid #e9e9e9;
+  }
+
+  .top-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+
+  .top-left {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #f6f6f6;
+    border: 1px solid #ebebeb;
+    border-radius: 999px;
+    padding: 7px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .pill strong {
+    color: var(--green);
+  }
+
+  .guide-text {
+    font-size: 12px;
+    color: var(--text-soft);
+    line-height: 1.5;
+  }
+
+  .submit-btn {
+    width: 100%;
+    background: var(--line-green);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    padding: 13px 16px;
+    font-size: 14px;
+    font-weight: 700;
+    font-family: inherit;
+    cursor: pointer;
+    transition: background 0.2s;
+    visibility: hidden;
+  }
+
+  .submit-btn.visible {
+    visibility: visible;
+  }
+
+  .submit-btn:active {
+    background: #05a847;
+  }
+
+  /* Week nav */
+  .week-nav {
+    background: #8fd17b;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    margin: 0 10px;
+    border-radius: 10px 10px 0 0;
+    color: white;
+  }
+
+  .week-label {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+  }
+
+  .nav-arrow {
+    background: rgba(255,255,255,0.22);
+    border: none;
+    color: white;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    font-size: 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .nav-arrow:active {
+    background: rgba(255,255,255,0.35);
+  }
+
+  /* calendar */
+  .calendar-wrap {
+    margin: 0 10px;
+    overflow-x: auto;
+    background: transparent;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 4px;
+    min-width: 640px;
+    background: #f0f0f0;
+  }
+
+  thead th {
+    padding: 10px 4px;
+    text-align: center;
+    font-weight: 700;
+    font-size: 11px;
+    border: none;
+    position: sticky;
+    top: 53px;
+    background: var(--grid-gray);
+    z-index: 10;
+    color: #6f6f6f;
+  }
+
+  thead th:first-child {
+    width: 92px;
+    background: var(--grid-gray);
+  }
+
+  thead .col-sat {
+    background: var(--sat-bg);
+    color: #59a6d2;
+  }
+
+  thead .col-sun {
+    background: var(--sun-bg);
+    color: var(--red);
+  }
+
+  .date-num {
+    font-size: 24px;
+    line-height: 1.05;
+    font-weight: 700;
+  }
+
+  .date-day {
+    font-size: 11px;
+    font-weight: 500;
+    margin-top: 2px;
+  }
+
+  .closed-badge {
+    font-size: 9px;
+    color: #9f9f9f;
+    display: block;
+    margin-top: 2px;
+  }
+
+  tbody td {
+    text-align: center;
+    border: none;
+    height: 64px;
+    padding: 0;
+    background: var(--cell-bg);
+  }
+
+  tbody td:first-child {
+    width: 92px;
+    font-size: 24px;
+    color: #6a6a6a;
+    font-weight: 700;
+    background: var(--time-bg);
+    padding: 0 8px;
+    letter-spacing: 0.01em;
+  }
+
+  .col-sat { background: #f4fbff; }
+  .col-sun { background: #fff4f4; }
+  .col-closed { background: var(--closed-bg) !important; }
+
+  thead .col-closed {
+    background: var(--closed-bg) !important;
+    color: #a7a7a7 !important;
+  }
+
+  .slot {
+    width: calc(100% - 10px);
+    height: calc(100% - 10px);
+    margin: 5px;
+    border: none;
+    border-radius: 10px;
+    background: #f8f8f8;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: inherit;
+    transition: all 0.15s;
+    line-height: 1;
+  }
+
+  .slot.available {
+    color: var(--green);
+    font-size: 34px;
+    font-weight: 700;
+  }
+
+  .slot.available:active {
+    background: var(--green-light);
+  }
+
+  .slot.taken {
+    color: #777;
+    background: #f4f4f4;
+    font-size: 34px;
+    font-weight: 500;
+    cursor: not-allowed;
+  }
+
+  .slot.past {
+    color: #cfcfcf;
+    background: #ececec;
+    font-size: 28px;
+    cursor: not-allowed;
+  }
+
+  .slot.selected {
+    background: var(--green);
+    color: white;
+    font-size: 34px;
+    font-weight: 700;
+  }
+
+  /* legend */
+  .legend {
+    display: flex;
+    gap: 10px;
+    padding: 14px 10px 6px;
+    font-size: 12px;
+    color: var(--text-soft);
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #fff;
+    border: 1px solid #ebebeb;
+    border-radius: 999px;
+    padding: 7px 10px;
+  }
+
+  .legend-circle,
+  .legend-cross,
+  .legend-box,
+  .legend-muted {
+    width: 18px;
+    height: 18px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    flex: 0 0 auto;
+  }
+
+  .legend-circle {
+    color: var(--green);
+    font-size: 18px;
+    font-weight: 700;
+  }
+
+  .legend-cross {
+    color: #777;
+    font-size: 18px;
+    font-weight: 500;
+  }
+
+  .legend-box {
+    background: var(--green);
+    color: #fff;
+    font-size: 16px;
+    font-weight: 700;
+  }
+
+  .legend-muted {
+    background: #d8d8d8;
+  }
+
+  /* toast */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: #1f1f1f;
+    color: white;
+    padding: 10px 18px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 500;
+    transition: transform 0.25s ease;
+    z-index: 200;
+    white-space: nowrap;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+  }
+
+  .toast.show {
+    transform: translateX(-50%) translateY(0);
+  }
+
+  /* modal */
+  .modal-bg {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.45);
+    z-index: 300;
+    display: none;
+    align-items: flex-end;
+    justify-content: center;
+  }
+
+  .modal-bg.open {
+    display: flex;
+  }
+
+  .modal {
+    background: white;
+    border-radius: 18px 18px 0 0;
+    padding: 22px 18px 30px;
+    width: 100%;
+    max-width: 520px;
+    animation: slideUp 0.25s ease;
+  }
+
+  @keyframes slideUp {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+  }
+
+  .modal h2 {
+    font-size: 17px;
+    font-weight: 700;
+    margin-bottom: 16px;
+    text-align: center;
+  }
+
+  .modal-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 12px 0;
+    border-bottom: 1px solid #f0f0f0;
+    font-size: 14px;
+  }
+
+  .modal-row .label {
+    color: var(--text-soft);
+    flex: 0 0 auto;
+  }
+
+  .modal-row .value {
+    font-weight: 700;
+    text-align: right;
+  }
+
+  .modal-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 18px;
+  }
+
+  .btn-cancel {
+    flex: 1;
+    padding: 12px;
+    border: 1.5px solid #e0e0e0;
+    background: white;
+    border-radius: 10px;
+    font-size: 14px;
+    font-family: inherit;
+    cursor: pointer;
+    font-weight: 600;
+  }
+
+  .btn-confirm {
+    flex: 2;
+    padding: 12px;
+    border: none;
+    background: var(--line-green);
+    color: white;
+    border-radius: 10px;
+    font-size: 14px;
+    font-family: inherit;
+    cursor: pointer;
+    font-weight: 700;
+  }
+
+  @media (max-width: 480px) {
+    .header h1 {
+      font-size: 15px;
+    }
+
+    .top-card {
+      padding: 12px;
+    }
+
+    .top-row {
+      align-items: flex-start;
+      flex-direction: column;
+    }
+
+    .guide-text {
+      font-size: 11px;
+    }
+
+    thead th {
+      top: 53px;
+    }
+
+    table {
+      min-width: 560px;
+    }
+
+    thead th:first-child,
+    tbody td:first-child {
+      width: 82px;
+    }
+
+    tbody td:first-child {
+      font-size: 20px;
+    }
+
+    tbody td {
+      height: 58px;
+    }
+
+    .date-num {
+      font-size: 20px;
+    }
+
+    .slot.available,
+    .slot.taken,
+    .slot.selected {
+      font-size: 30px;
+    }
+  }
+</style>
+<script src="https://static.line-scdn.net/liff/edge/versions/2.22.3/sdk.js"></script>
+</head>
+<body>
+<div class="page">
+
+  <div class="header">
+    <h1>予約ページ</h1>
+    <button class="history-btn" onclick="showToast('予約履歴は準備中です')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="10"></circle>
+        <polyline points="12 6 12 12 16 14"></polyline>
+      </svg>
+      予約履歴
+    </button>
+  </div>
+
+  <div class="top-card">
+    <div class="top-row">
+      <div class="top-left">
+        <div class="pill">診察区分 <strong id="treatmentLabel">検診</strong></div>
+        <div class="pill">所要時間 <strong>50分</strong></div>
+      </div>
+    </div>
+    <div class="guide-text">ご希望の日時を1つ選んでください。空いている枠は○、予約済みは×です。</div>
+    <div style="margin-top:12px;">
+      <button class="submit-btn" id="submitBtn" onclick="openModal()">この日時で予約する</button>
+    </div>
+  </div>
+
+  <div class="week-nav">
+    <button class="nav-arrow" onclick="changeWeek(-1)">&#8249;</button>
+    <div class="week-label" id="weekLabel"></div>
+    <button class="nav-arrow" onclick="changeWeek(1)">&#8250;</button>
+  </div>
+
+  <div class="calendar-wrap">
+    <table id="calTable">
+      <thead id="calHead"></thead>
+      <tbody id="calBody"></tbody>
+    </table>
+  </div>
+
+  <div class="legend">
+    <div class="legend-item"><span class="legend-circle">○</span>空きあり</div>
+    <div class="legend-item"><span class="legend-cross">×</span>予約済み</div>
+    <div class="legend-item"><span class="legend-box">○</span>選択中</div>
+    <div class="legend-item"><span class="legend-muted"></span>休院・対象外</div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<div class="modal-bg" id="modalBg">
+  <div class="modal">
+    <h2>予約内容の確認</h2>
+    <div class="modal-row">
+      <span class="label">診察区分</span>
+      <span class="value" id="m-treatment">検診</span>
+    </div>
+    <div class="modal-row">
+      <span class="label">予約日時</span>
+      <span class="value" id="m-datetime"></span>
+    </div>
+    <div class="modal-row">
+      <span class="label">所要時間</span>
+      <span class="value">50分</span>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal()">戻る</button>
+      <button class="btn-confirm" onclick="confirmReservation()">予約を確定する</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===== CONFIG =====
+const N8N_WEBHOOK_URL = 'https://n8n.exiine.com/webhook/liff-reservation';
+const TREATMENT_TYPE = new URLSearchParams(location.search).get('treatment') || '検診';
+const USER_ID = new URLSearchParams(location.search).get('userId') || '';
+document.getElementById('treatmentLabel').textContent = TREATMENT_TYPE;
+
+// ===== 休院日設定 =====
+const HOLIDAYS = new Set([
+  '2026-01-01',
+  '2026-01-12',
+  '2026-02-11',
+  '2026-02-23',
+  '2026-03-20',
+  '2026-04-29',
+  '2026-05-03',
+  '2026-05-04',
+  '2026-05-05',
+  '2026-07-20',
+  '2026-08-11',
+  '2026-09-21',
+  '2026-09-23',
+  '2026-10-12',
+  '2026-11-03',
+  '2026-11-23',
+]);
+
+const SPECIAL_CLOSED_DATES = new Set([
+  // '2026-08-13',
+  // '2026-12-29',
+]);
+
+function weekHasHoliday(date) {
+  const dow = date.getDay();
+  const monday = new Date(date);
+  monday.setDate(date.getDate() - (dow === 0 ? 6 : dow - 1));
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(monday);
+    d.setDate(monday.getDate() + i);
+    const ds = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    if (HOLIDAYS.has(ds)) return true;
+  }
+  return false;
+}
+
+function isClosedDay(date) {
+  const dateStr = `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
+  const dow = date.getDay();
+
+  if (SPECIAL_CLOSED_DATES.has(dateStr)) return true;
+  if (HOLIDAYS.has(dateStr)) return true;
+  if (dow === 0) return true;
+
+  if (dow === 4) {
+    return !weekHasHoliday(date);
+  }
+
+  return false;
+}
+
+// ===== STATE =====
+let weekOffset = 0;
+let selectedSlot = null;
+
+// ===== DUMMY taken slots =====
+const takenSlots = new Set([
+  '2026-03-02_09:00', '2026-03-02_10:00', '2026-03-03_14:00',
+  '2026-02-28_09:00', '2026-02-28_10:30', '2026-02-27_11:00',
+]);
+
+// ===== 診療時間設定 =====
+const WEEKDAY_SLOTS = [
+  '09:30','10:00','10:30','11:00','11:30','12:00','12:30',
+  '14:30','15:00','15:30','16:00','16:30','17:00','17:30','18:00','18:30'
+];
+
+const SATURDAY_SLOTS = [
+  '09:30','10:00','10:30','11:00','11:30','12:00','12:30',
+  '14:30','15:00','15:30','16:00','16:30','17:00','17:30'
+];
+
+const ALL_TIMES = [
+  '09:30','10:00','10:30','11:00','11:30','12:00','12:30',
+  '14:30','15:00','15:30','16:00','16:30','17:00','17:30','18:00','18:30'
+];
+
+function getSlotsForDate(date) {
+  if (isClosedDay(date)) return null;
+  if (date.getDay() === 6) return SATURDAY_SLOTS;
+  return WEEKDAY_SLOTS;
+}
+
+// ===== DATE HELPERS =====
+function getWeekDates(offset) {
+  const today = new Date();
+  today.setHours(0,0,0,0);
+
+  const dow = today.getDay();
+  const monday = new Date(today);
+  monday.setDate(today.getDate() - dow + 1 + offset * 7);
+
+  const days = [];
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(monday);
+    d.setDate(monday.getDate() + i);
+    days.push(d);
+  }
+  return days;
+}
+
+function fmtDate(d) {
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+const dayNames = ['日','月','火','水','木','金','土'];
+
+function isPast(date, time) {
+  const now = new Date();
+  const [h, m] = time.split(':').map(Number);
+  const slotDate = new Date(date);
+  slotDate.setHours(h, m, 0, 0);
+  return slotDate <= now;
+}
+
+// ===== RENDER =====
+function render() {
+  const days = getWeekDates(weekOffset);
+  const startLabel = `${days[0].getFullYear()}-${String(days[0].getMonth()+1).padStart(2,'0')}-${String(days[0].getDate()).padStart(2,'0')}`;
+  const endLabel = `${days[6].getFullYear()}-${String(days[6].getMonth()+1).padStart(2,'0')}-${String(days[6].getDate()).padStart(2,'0')}`;
+  document.getElementById('weekLabel').textContent = `${startLabel} 〜 ${endLabel}`;
+
+  const head = document.getElementById('calHead');
+  head.innerHTML = `<tr>
+    <th></th>
+    ${days.map((d) => {
+      const isClosed = isClosedDay(d);
+      const cls = isClosed ? 'col-closed' : d.getDay()===6 ? 'col-sat' : d.getDay()===0 ? 'col-sun' : '';
+      return `<th class="${cls}">
+        <div class="date-num">${d.getDate()}</div>
+        <div class="date-day">${dayNames[d.getDay()]}</div>
+        ${isClosed ? '<span class="closed-badge">休院</span>' : ''}
+      </th>`;
+    }).join('')}
+  </tr>`;
+
+  const body = document.getElementById('calBody');
+  body.innerHTML = ALL_TIMES.map(time => {
+    const cells = days.map((d) => {
+      const dateStr = fmtDate(d);
+      const key = `${dateStr}_${time}`;
+      const isClosed = isClosedDay(d);
+      const daySlots = getSlotsForDate(d);
+      const isOutOfHours = !isClosed && (!daySlots || !daySlots.includes(time));
+      const cls =
+        isClosed ? 'col-closed'
+        : d.getDay()===6 ? 'col-sat'
+        : d.getDay()===0 ? 'col-sun'
+        : '';
+
+      const isSelected = selectedSlot && selectedSlot.key === key;
+      const isTaken = takenSlots.has(key);
+      const past = isPast(d, time);
+
+      let slotClass = 'slot';
+      let content = '';
+      let disabled = false;
+
+      if (isClosed || isOutOfHours) {
+        slotClass += ' past';
+        content = '';
+        disabled = true;
+      } else if (isSelected) {
+        slotClass += ' selected';
+        content = '○';
+      } else if (past) {
+        slotClass += ' past';
+        content = '×';
+        disabled = true;
+      } else if (isTaken) {
+        slotClass += ' taken';
+        content = '×';
+        disabled = true;
+      } else {
+        slotClass += ' available';
+        content = '○';
+      }
+
+      const label = `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日 ${time}`;
+
+      return `<td class="${cls}">
+        <button class="${slotClass}" ${disabled ? 'disabled' : ''}
+          onclick="selectSlot('${dateStr}','${time}','${key}','${label}')">${content}</button>
+      </td>`;
+    }).join('');
+
+    return `<tr><td>${time}</td>${cells}</tr>`;
+  }).join('');
+}
+
+function selectSlot(dateStr, time, key, label) {
+  if (selectedSlot && selectedSlot.key === key) {
+    selectedSlot = null;
+  } else {
+    selectedSlot = { dateStr, time, key, label };
+  }
+
+  const btn = document.getElementById('submitBtn');
+  if (selectedSlot) {
+    btn.classList.add('visible');
+    showToast(`${selectedSlot.label} を選択しました`);
+  } else {
+    btn.classList.remove('visible');
+  }
+
+  render();
+}
+
+function changeWeek(dir) {
+  weekOffset += dir;
+  render();
+}
+
+// ===== MODAL =====
+function openModal() {
+  if (!selectedSlot) return;
+  document.getElementById('m-treatment').textContent = TREATMENT_TYPE;
+  document.getElementById('m-datetime').textContent = selectedSlot.label;
+  document.getElementById('modalBg').classList.add('open');
+}
+
+function closeModal() {
+  document.getElementById('modalBg').classList.remove('open');
+}
+
+async function confirmReservation() {
+  closeModal();
+  showToast('予約を送信中...');
+
+  try {
+    let userId = USER_ID;
+
+    if (window.liff) {
+      try {
+        const profile = await liff.getProfile();
+        if (profile.userId) userId = profile.userId;
+      } catch(e) {
+        console.warn('LIFF profile error:', e);
+      }
+    }
+
+    await fetch(N8N_WEBHOOK_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        userId: userId,
+        treatment_type: TREATMENT_TYPE,
+        datetime: selectedSlot.label,
+        dateStr: selectedSlot.dateStr,
+        time: selectedSlot.time,
+      })
+    });
+
+    showToast('✅ 予約が完了しました！');
+
+    setTimeout(() => {
+      if (window.liff && liff.isInClient()) liff.closeWindow();
+    }, 2000);
+
+  } catch(e) {
+    showToast('❌ エラー: ' + e.message);
+  }
+}
+
+// ===== TOAST =====
+let toastTimer;
+function showToast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 2500);
+}
+
+// ===== LIFF初期化 =====
+const LIFF_ID = '2009294665-aOdrW1do';
+async function initLiff() {
+  try {
+    await liff.init({ liffId: LIFF_ID });
+    if (!liff.isLoggedIn()) {
+      liff.login();
+    }
+  } catch(e) {
+    console.warn('LIFF init failed:', e);
+  }
+}
+
+// ===== INIT =====
+render();
+if (window.liff) initLiff();
+</script>
+</body>
+</html>
