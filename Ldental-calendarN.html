@@ -698,7 +698,7 @@ async function confirmReservation() {
       try {
         await liff.sendMessages([{
           type: 'text',
-          text: `__LIFF_COMPLETE__:${selectedSlot.dateStr}:${selectedSlot.time}:${TREATMENT_TYPE}`
+          text: `__LIFF_COMPLETE__|${selectedSlot.dateStr}|${selectedSlot.time}|${TREATMENT_TYPE}`
         }]);
       } catch(e) { console.warn('sendMessages error:', e); }
       setTimeout(() => liff.closeWindow(), 1500);
