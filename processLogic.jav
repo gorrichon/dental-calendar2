@@ -256,8 +256,20 @@ else if (step === 'waiting_liff') {
     // 日時を保存して名前入力へ
     nextSession.selected_date = dateStr;
     nextSession.selected_time = time;
-    nextSession.current_step = 'waiting_name';
-    replyMessage = `${dateStr} ${time}〜 で承りました。\n\nお名前をフルネームでご入力ください。\n例：山田 太郎`;
+    // 過去の予約から患者情報を検索
+const pastReservation = reservationRows.find(r =>
+  r.line_user_id === session.line_user_id && r.patient_name && r.phone
+);
+
+if (pastReservation) {
+  nextSession.patient_name = pastReservation.patient_name;
+  nextSession.phone = pastReservation.phone;
+  nextSession.current_step = 'waiting_reuse_confirm';
+  replyMessage = `以前ご登録の情報がありました。\n\n👤 ${pastReservation.patient_name}\n📞 ${pastReservation.phone}\n\nこの情報で続けますか？`;
+} else {
+  nextSession.current_step = 'waiting_name';
+  replyMessage = `${dateStr} ${time}〜 で承りました。\n\nお名前をフルネームでご入力ください。\n例：山田 太郎`;
+}
   } else {
     const menuForLiff = menuRows.find(m => m.menu_code === session.selected_menu_code);
     const liffUrl = `https://liff.line.me/2009294665-aOdrW1do?treatment=${encodeURIComponent(menuForLiff?.menu_name || '')}&userId=${session.line_user_id}`;
@@ -286,6 +298,24 @@ else if (step === 'showing_candidates') {
       text += '\n「別の日」で日付変更';
       replyMessage = text;
     }
+  }
+}
+
+else if (step === 'waiting_reuse_confirm') {
+  if (message === 'OK') {
+    // 保存済み情報をそのまま使って確認画面へ
+    nextSession.current_step = 'waiting_confirm';
+    const menuForConfirm = menuRows.find(m => m.menu_code === session.selected_menu_code);
+    replyMessage = `【予約内容のご確認】\n\n` +
+      `📅 日時：${nextSession.selected_date} ${nextSession.selected_time}〜\n` +
+      `🦷 メニュー：${menuForConfirm?.menu_name || ''}\n` +
+      `👤 お名前：${nextSession.patient_name}\n` +
+      `📞 電話番号：${nextSession.phone}\n\n` +
+      `上記の内容でよろしいですか？`;
+  } else {
+    // 「戻る」→ 通常の入力フローへ
+    nextSession.current_step = 'waiting_name';
+    replyMessage = `お名前をフルネームでご入力ください。\n例：山田 太郎`;
   }
 }
 
@@ -382,7 +412,7 @@ else {
 }
 
 // メッセージ構造を構築（確認画面はボタン付き）
-const isConfirmMsg = replyMessage.includes('【予約内容のご確認】');
+const isConfirmMsg = replyMessage.includes('【予約内容のご確認】') || replyMessage.includes('この情報で続けますか');
 const replyMessages = [{
   type: 'text',
   text: replyMessage,
