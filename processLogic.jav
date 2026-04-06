@@ -302,7 +302,7 @@ else if (step === 'showing_candidates') {
 }
 
 else if (step === 'waiting_reuse_confirm') {
-  if (message === 'OK') {
+  if (message === 'OK' || message === 'はい' || message === 'yes' || message === 'YES') {
     // 保存済み情報をそのまま使って確認画面へ
     nextSession.current_step = 'waiting_confirm';
     const menuForConfirm = menuRows.find(m => m.menu_code === session.selected_menu_code);
